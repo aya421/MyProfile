@@ -1,138 +1,159 @@
-import { useState, useEffect } from "react";
-import { BrowserRouter, Routes, Route, useParams, useNavigate } from "react-router-dom";
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>My Profile</title>
 
-function normalizeInstagram(input) {
-  if (!input) return "";
-  return input.replace(/^@/, "").trim();
-}
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
 
-function Home() {
-  const [name, setName] = useState("");
-  const [intro, setIntro] = useState("");
-  const [instagram, setInstagram] = useState("");
-  const [image, setImage] = useState(null);
+  <!-- React -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
 
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setImage(reader.result);
-    };
-    reader.readAsDataURL(file);
-  };("");
-  const navigate = useNavigate();
+<body class="bg-gradient-to-br from-pink-200 via-purple-200 to-blue-200 min-h-screen">
+  <div id="root"></div>
 
-  const handleSubmit = () => {
-    if (!name) return;
-    const id = crypto.randomUUID();
-    const profile = { id, name, intro, instagram: normalizeInstagram(instagram), image };
-    const profiles = JSON.parse(localStorage.getItem("profiles") || "[]");
-    profiles.push(profile);
-    localStorage.setItem("profiles", JSON.stringify(profiles));
-    navigate(`/profile/${id}`);
-  };
+  <script type="text/babel">
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-200 via-purple-200 to-blue-200 p-4">
-      <div className="relative bg-white/90 backdrop-blur p-6 rounded-[2.5rem] shadow-xl w-full max-w-md">
-        
-        <h1 className="text-center text-3xl font-extrabold text-purple-500 mb-4 mt-4">My Profile</h1>
-        <div className="flex justify-center mb-4">
-          <label className="cursor-pointer">
-            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-pink-200 to-purple-200 flex items-center justify-center overflow-hidden border-4 border-white shadow">
-              {image ? (
-                <img src={image} alt="preview" className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-purple-400 text-sm">画像</span>
-              )}
+    const { useState, useEffect } = React;
+
+    function normalizeInstagram(input) {
+      if (!input) return "";
+      return input.replace(/^@/, "").trim();
+    }
+
+    function App() {
+      const [page, setPage] = useState("home");
+      const [profile, setProfile] = useState(null);
+
+      useEffect(() => {
+        const hash = location.hash.replace("#", "");
+        if (hash) {
+          const profiles = JSON.parse(localStorage.getItem("profiles") || "[]");
+          const p = profiles.find(p => p.id === hash);
+          if (p) {
+            setProfile(p);
+            setPage("profile");
+          }
+        }
+      }, []);
+
+      if (page === "profile" && profile) {
+        return <Profile profile={profile} />;
+      }
+
+      return <Home onCreate={(p) => {
+        setProfile(p);
+        setPage("profile");
+        location.hash = p.id;
+      }} />;
+    }
+
+    function Home({ onCreate }) {
+      const [name, setName] = useState("");
+      const [intro, setIntro] = useState("");
+      const [instagram, setInstagram] = useState("");
+      const [image, setImage] = useState(null);
+
+      const handleImageUpload = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => setImage(reader.result);
+        reader.readAsDataURL(file);
+      };
+
+      const handleSubmit = () => {
+        if (!name) return;
+        const id = crypto.randomUUID();
+        const profile = {
+          id,
+          name,
+          intro,
+          instagram: normalizeInstagram(instagram),
+          image,
+        };
+        const profiles = JSON.parse(localStorage.getItem("profiles") || "[]");
+        profiles.push(profile);
+        localStorage.setItem("profiles", JSON.stringify(profiles));
+        onCreate(profile);
+      };
+
+      return (
+        <div className="flex justify-center items-center min-h-screen p-4">
+          <div className="bg-white/90 p-6 rounded-[2.5rem] shadow-xl w-full max-w-md">
+            <h1 className="text-center text-3xl font-extrabold text-purple-500 mb-4">
+              My Profile
+            </h1>
+
+            <div className="flex justify-center mb-4">
+              <label className="cursor-pointer">
+                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-pink-200 to-purple-200 flex items-center justify-center overflow-hidden border-4 border-white shadow">
+                  {image ? (
+                    <img src={image} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-purple-400 text-sm">画像</span>
+                  )}
+                </div>
+                <input type="file" accept="image/*" onChange={handleImageUpload} hidden />
+              </label>
             </div>
-            <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-          </label>
-        </div>
-        <input
-          className="border-2 border-purple-200 p-3 w-full mb-3 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-300"
-          placeholder="なまえ"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-        <textarea
-          className="border-2 border-purple-200 p-3 w-full mb-3 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-300"
-          placeholder="じこしょうかい"
-          value={intro}
-          onChange={(e) => setIntro(e.target.value)}
-        />
-        <input
-          className="border-2 border-purple-200 p-3 w-full mb-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-300"
-          placeholder="Instagram ID"
-          value={instagram}
-          onChange={(e) => setInstagram(e.target.value)}
-        />
-        <button
-          onClick={handleSubmit}
-          className="w-full bg-gradient-to-r from-pink-400 to-purple-400 hover:from-pink-500 hover:to-purple-500 text-white py-3 rounded-full font-bold transition"
-        >
-          ♡ カードをつくる ♡
-        </button>
-      </div>
-    </div>
-  );
-}
 
-function Profile() {
-  const { id } = useParams();
-  const [profile, setProfile] = useState(null);
+            <input className="border-2 border-purple-200 p-3 w-full mb-3 rounded-2xl"
+              placeholder="なまえ" value={name} onChange={e => setName(e.target.value)} />
 
-  useEffect(() => {
-    const profiles = JSON.parse(localStorage.getItem("profiles") || "[]");
-    setProfile(profiles.find((p) => p.id === id));
-  }, [id]);
+            <textarea className="border-2 border-purple-200 p-3 w-full mb-3 rounded-2xl"
+              placeholder="じこしょうかい" value={intro} onChange={e => setIntro(e.target.value)} />
 
-  if (!profile) {
-    return <div className="p-10">プロフィールが見つかりません</div>;
-  }
+            <input className="border-2 border-purple-200 p-3 w-full mb-4 rounded-2xl"
+              placeholder="Instagram ID" value={instagram} onChange={e => setInstagram(e.target.value)} />
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-200 via-purple-200 to-blue-200 p-4">
-      <div className="bg-white/90 backdrop-blur p-6 rounded-[2.5rem] shadow-xl w-full max-w-md">
-        {profile.image && (
-          <div className="flex justify-center mb-4">
-            <img
-              src={profile.image}
-              alt="icon"
-              className="w-28 h-28 rounded-full object-cover border-4 border-white shadow"
-            />
+            <button onClick={handleSubmit}
+              className="w-full bg-gradient-to-r from-pink-400 to-purple-400 text-white py-3 rounded-full font-bold">
+              ♡ カードをつくる ♡
+            </button>
           </div>
-        )}
-        <div className="text-center mb-4">
-          <div className="text-xs text-purple-400 tracking-widest">MY PROFILE</div>
-          <h1 className="text-3xl font-extrabold text-purple-500 mt-1">{profile.name}</h1>
         </div>
-        <div className="bg-gradient-to-br from-pink-50 to-purple-50 rounded-2xl p-4 mb-4">
-          <p className="text-gray-700 whitespace-pre-wrap text-sm leading-relaxed">{profile.intro}</p>
-        </div>
-        {profile.instagram && (
-          <a
-            href={`https://www.instagram.com/${profile.instagram}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block text-center bg-gradient-to-r from-pink-400 to-purple-400 text-white py-3 rounded-full font-bold"
-          >
-            📷 @{profile.instagram}
-          </a>
-        )}
-      </div>
-    </div>
-  );
-}
+      );
+    }
 
-export default function App() {
-  return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/profile/:id" element={<Profile />} />
-      </Routes>
-    </BrowserRouter>
-  );
-}
+    function Profile({ profile }) {
+      return (
+        <div className="flex justify-center items-center min-h-screen p-4">
+          <div className="bg-white/90 p-6 rounded-[2.5rem] shadow-xl w-full max-w-md">
+            {profile.image && (
+              <div className="flex justify-center mb-4">
+                <img src={profile.image}
+                  className="w-28 h-28 rounded-full object-cover border-4 border-white shadow" />
+              </div>
+            )}
+            <div className="text-center mb-4">
+              <div className="text-xs text-purple-400">MY PROFILE</div>
+              <h1 className="text-3xl font-extrabold text-purple-500">
+                {profile.name}
+              </h1>
+            </div>
+
+            <p className="bg-pink-50 p-4 rounded-2xl text-sm whitespace-pre-wrap mb-4">
+              {profile.intro}
+            </p>
+
+            {profile.instagram && (
+              <a href={`https://www.instagram.com/${profile.instagram}`}
+                target="_blank"
+                className="block text-center bg-gradient-to-r from-pink-400 to-purple-400 text-white py-3 rounded-full font-bold">
+                📷 @{profile.instagram}
+              </a>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>
